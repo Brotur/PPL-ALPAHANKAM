@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <title>Peta Satuan Kewilayahan TNI</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        #map { 
+            height: calc(100vh - 120px); /* Adjust for header and footer */
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+
+    <!--== Favicon ==-->
+    <link rel="shortcut icon" href="assets/img/favicon.ico" type="image/x-icon" />
+
+    <!--== Google Fonts ==-->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,300;1,400&display=swap" rel="stylesheet">
+
+    <!-- build:css assets/css/app.min.css -->
+    <!--== jqvmap Min CSS ==-->
+    <link href="assets/css/jqvmap.min.css" rel="stylesheet" />
+    <!--== ChartJS Min CSS ==-->
+    <link href="assets/css/chart.min.css" rel="stylesheet" />
+    <!--== DataTables Min CSS ==-->
+    <link href="assets/css/datatables.min.css" rel="stylesheet" />
+    <!--== Select2 Min CSS ==-->
+    <link href="assets/css/select2.min.css" rel="stylesheet" />
+    <!--== Bootstrap Min CSS ==-->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!--== Main Style CSS ==-->
+    <link href="assets/css/style.css" rel="stylesheet" />
+    <!-- endbuild -->
+
+    <!--[if lt IE 9]>
+    <script src="//oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="//oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+    <header class="header-wrapper">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-3">
+                    <div class="navbar-wrap">
+                        <nav class="menubar">
+                            <ul class="nav">
+                                <li><a href="index.html" class="nav-link">SATPUR TNI AD</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="logo-wrap text-center">
+                        <a href="index.html" class="d-flex justify-content-center">
+                            <img src="assets/img/logo.png" alt="GARUDA" class="img-fluid" />
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <div class="navbar-wrap">
+                        <nav class="menubar">
+                            <ul class="nav justify-content-end">
+                                <li><a href="map.html" class="nav-link">SATWIL TNI </a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <style>
+        #info {
+            position: absolute;
+            top: 80px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+    </style>
+        <style>
+            #map { height: 900px; width: 100%; }
+    
+            /* Add these styles for the military force buttons */
+            .military-footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: rgba(255, 255, 255, 0.9);
+                padding: 10px 0;
+                z-index: 1000;
+                border-top: 2px solid #ccc;
+            }
+    
+            .btn-military {
+                display: block;
+                width: 100%;
+                padding: 10px;
+                border: none;
+                background: #f1f1f1;
+                color: #333;
+                font-weight: bold;
+                text-transform: uppercase;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+    
+            .btn-military.active {
+                background: #27c400cf;
+                color: white;
+            }
+    
+            .btn-military[data-force="AL"].active {
+                background: #020c5d;
+            }
+    
+            .btn-military[data-force="AU"].active {
+                background: #0066cc;
+            }
+    
+            .popup-content {
+                padding: 10px;
+            }
+    
+            .popup-btn {
+                margin-top: 10px;
+                padding: 5px 10px;
+                background: #d10000;
+                color: white;
+                border: none;
+                border-radius: 3px;
+                cursor: pointer;
+            }
+        </style>
+    <div id="map"></div>
+    <div id="info"></div>
+
+    <script>
+        var map = L.map('map').setView([-2.5489, 118.0149], 5);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+    
+        // Set map boundaries for Indonesia
+        var indonesiaBounds = [
+            [-11.0, 95.0], // Southwest coordinates
+            [6.0, 141.0]   // Northeast coordinates
+        ];
+    
+        // Restrict map panning to Indonesia
+        map.setMaxBounds(indonesiaBounds);
+        map.setMinZoom(5);
+        var adIcon = L.divIcon({
+            className: 'custom-marker ad-marker',
+            iconSize: [25, 25],
+            iconAnchor: [12, 12],
+            html: '<div style="width: 100%; height: 100%; background-color: #27c400; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.3);"></div>'
+        });
+        var alIcon = L.divIcon({
+            className: 'custom-marker al-marker',
+            iconSize: [25, 25],
+            iconAnchor: [12, 12],
+            html: '<div style="width: 100%; height: 100%; background-color: #020c5d; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.3);"></div>'
+        });
+
+        var auIcon = L.divIcon({
+            className: 'custom-marker au-marker',
+            iconSize: [25, 25],
+            iconAnchor: [12, 12],
+            html: '<div style="width: 100%; height: 100%; background-color: #0066cc; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.3);"></div>'
+        });
+
+
+        var kodam1Icon = L.icon({
+            iconUrl: 'assets/img/KODAM1.png',  // Path to your KODAM1.png image
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+        
+        var udayanaIcon = L.icon({
+            iconUrl: 'assets/img/udayana.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+        var jayaIcon = L.icon({
+            iconUrl: 'assets/img/jaya.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var siliwangiIcon = L.icon({
+            iconUrl: 'assets/img/kodam3.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var cendrawasihIcon = L.icon({
+            iconUrl: 'assets/img/cendrawasih.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var mulawarmanIcon = L.icon({
+            iconUrl: 'assets/img/mulawarman.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+        
+        var diponegoroIcon = L.icon({
+            iconUrl: 'assets/img/diponegoro.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var pattimuraIcon = L.icon({
+            iconUrl: 'assets/img/pattimura.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var hasanudinIcon = L.icon({
+            iconUrl: 'assets/img/hasanudin.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var tanjungpuraIcon = L.icon({
+            iconUrl: 'assets/img/tanjungpura.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var merdekaIcon = L.icon({
+            iconUrl: 'assets/img/merdeka.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var kasuariIcon = L.icon({
+            iconUrl: 'assets/img/kasuari.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+        var brawijayaIcon = L.icon({
+            iconUrl: 'assets/img/brawijaya.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var sriwijayaIcon = L.icon({
+            iconUrl: 'assets/img/sriwijaya.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+        var koopsud1Icon = L.icon({
+            iconUrl: 'assets/img/KOOPSUD1.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var koopsud2Icon = L.icon({
+            iconUrl: 'assets/img/KOOPSUD2.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var koopsud3Icon = L.icon({
+            iconUrl: 'assets/img/KOOPSUD3.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var koarmada1Icon = L.icon({
+            iconUrl: 'assets/img/KOARMADA1.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var koarmada2Icon = L.icon({
+            iconUrl: 'assets/img/KOARMADA2.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var koarmada3Icon = L.icon({
+            iconUrl: 'assets/img/KOARMADA3.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+        var divif1Icon = L.icon({
+            iconUrl: 'assets/img/divif1.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var divif2Icon = L.icon({
+            iconUrl: 'assets/img/divif2.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var divif3Icon = L.icon({
+            iconUrl: 'assets/img/divif3.png',
+            iconSize: [50, 50],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+        // Data for KODAM (TNI AD)
+        var kodamData = [
+            { nama: "KODAM JAYA", lat: -6.1754, lon: 106.8272 },
+            { nama: "KODAM I/BB", lat: 3.5952, lon: 98.6722 },
+            { nama: "KODAM II/SWJ", lat: -2.9761, lon: 104.7754 },
+            { nama: "KODAM III/SLW", lat: -6.9147, lon: 107.6098 },
+            { nama: "KODAM IV/DIP", lat: -7.0051, lon: 110.4381 },
+            { nama: "KODAM V/BRW", lat: -7.2756, lon: 112.7931 },
+            { nama: "KODAM VI/MLW", lat: -0.5022, lon: 117.1536 },
+            { nama: "KODAM IX/UDY", lat: -8.6726, lon: 115.2243 },
+            { nama: "KODAM XII/TPR", lat: 0.0236, lon: 109.3425 },
+            { nama: "KODAM XIII/MDK", lat: 1.4748, lon: 124.8421 },
+            { nama: "KODAM XIV/HSN", lat: -5.1477, lon: 119.4327 },
+            { nama: "KODAM XVI/PTM", lat: -3.6962, lon: 128.1810 },
+            { nama: "KODAM XVII/CEN", lat: -2.5373, lon: 140.7183 },
+            { nama: "KODAM XVIII/KSR", lat: -0.8917, lon: 134.0818 }
+        ];
+        const kostradData = [
+            { 
+                nama: "KOSTRAD DIVIF 1", 
+                lat: -6.5891, 
+                lon: 106.7890,
+                detail: "Divisi Infanteri 1 Kostrad (Cilodong, Depok)",
+                alutsista: {
+                    "Tank": 40,
+                    "Panser": 60,
+                    "Artileri": 45,
+                    "Helikopter": 8,
+                    "Kendaraan Taktis": 120
+                }
+            },
+            { 
+                nama: "KOSTRAD DIVIF 2", 
+                lat: -7.5521, 
+                lon: 112.2322,
+                detail: "Divisi Infanteri 2 Kostrad (Singosari, Malang)",
+                alutsista: {
+                    "Tank": 35,
+                    "Panser": 55,
+                    "Artileri": 40,
+                    "Helikopter": 6,
+                    "Kendaraan Taktis": 100
+                }
+            },
+            { 
+                nama: "KOSTRAD DIVIF 3",
+                lat: -3.6962, 
+                lon: 128.1810,
+                detail: "Divisi Infanteri 3 Kostrad (Ambon)",
+                alutsista: {
+                    "Tank": 30,
+                    "Panser": 45,
+                    "Artileri": 35,
+                    "Helikopter": 5,
+                    "Kendaraan Taktis": 90
+                }
+            }
+        ];
+        // Data for KOARMADA (TNI AL)
+        const koarmadaData = [
+            { 
+                nama: "KOARMADA I", 
+                lat: -6.1754, 
+                lon: 106.8272, 
+                detail: "Markas Komando Armada I (Jakarta)",
+                alutsista: {
+                    "Kapal Perang": 25,
+                    "Kapal Selam": 5,
+                    "Kapal Patroli": 30,
+                    "Pesawat Maritim": 12,
+                    "Helikopter": 8
+                }
+            },
+            { 
+                nama: "KOARMADA II", 
+                lat: -7.2575, 
+                lon: 112.7521, 
+                detail: "Markas Komando Armada II (Surabaya)",
+                alutsista: {
+                    "Kapal Perang": 20,
+                    "Kapal Selam": 3,
+                    "Kapal Patroli": 25,
+                    "Pesawat Maritim": 10,
+                    "Helikopter": 6
+                }
+            },
+            { 
+                nama: "KOARMADA III", 
+                lat: -5.1477, 
+                lon: 119.4327, 
+                detail: "Markas Komando Armada III (Makassar)",
+                alutsista: {
+                    "Kapal Perang": 15,
+                    "Kapal Selam": 2,
+                    "Kapal Patroli": 20,
+                    "Pesawat Maritim": 8,
+                    "Helikopter": 4
+                }
+            }
+        ];   
+    
+        // Data for KOOPSAU (TNI AU)
+        const koopsudData = [  // Changed from koopsauData
+            { 
+                nama: "KOOPSUD I",  // Changed from KOOPSAU I
+                lat: -6.3032, 
+                lon: 106.8939, 
+                detail: "Komando Operasi TNI AU I (Jakarta)",
+                alutsista: {
+                    "Pesawat Tempur": 30,
+                    "Helikopter": 15,
+                    "Pesawat Angkut": 20,
+                    "Radar": 12,
+                    "Drone": 8
+                }
+            },
+            { 
+                nama: "KOOPSUD II",  // Changed from KOOPSAU II
+                lat: -7.2199, 
+                lon: 112.7168, 
+                detail: "Komando Operasi TNI AU II (Makassar)",
+                alutsista: {
+                    "Pesawat Tempur": 25,
+                    "Helikopter": 12,
+                    "Pesawat Angkut": 18,
+                    "Radar": 10,
+                    "Drone": 6
+                }
+            },
+            { 
+                nama: "KOOPSUD III",  // Changed from KOOPSAU III
+                lat: -2.5373, 
+                lon: 140.7183, 
+                detail: "Komando Operasi TNI AU III (Biak)",
+                alutsista: {
+                    "Pesawat Tempur": 20,
+                    "Helikopter": 10,
+                    "Pesawat Angkut": 15,
+                    "Radar": 8,
+                    "Drone": 5
+                }
+            }
+        ];
+    
+        // Data alutsista untuk setiap KODAM
+        const kodamAlutsista = {
+            "KODAM JAYA": {
+                "Tank": 15,
+                "Panser": 25,
+                "Artileri": 30,
+                "Helikopter": 5,
+                "Meriam": 20
+            },
+            "KODAM I/BB": {
+                "Tank": 12,
+                "Panser": 18,
+                "Artileri": 22,
+                "Helikopter": 3,
+                "Meriam": 17
+            },
+            "KODAM II/SWJ": {
+                "Tank": 14,
+                "Panser": 20,
+                "Artileri": 24,
+                "Helikopter": 2,
+                "Meriam": 15
+            },
+            "KODAM III/SLW": {
+                "Tank": 20,
+                "Panser": 20,
+                "Artileri": 25,
+                "Helikopter": 3,
+                "Meriam": 15
+            },
+            "KODAM IV/DIP": {
+                "Tank": 18,
+                "Panser": 22,
+                "Artileri": 28,
+                "Helikopter": 4,
+                "Meriam": 18
+            },
+            "KODAM V/BRW": {
+                "Tank": 22,
+                "Panser": 28,
+                "Artileri": 32,
+                "Helikopter": 6,
+                "Meriam": 25
+            },
+            "KODAM VI/MLW": {
+                "Tank": 16,
+                "Panser": 24,
+                "Artileri": 26,
+                "Helikopter": 4,
+                "Meriam": 16
+            },
+            "KODAM IX/UDY": {
+                "Tank": 10,
+                "Panser": 15,
+                "Artileri": 18,
+                "Helikopter": 2,
+                "Meriam": 12
+            },
+            "KODAM XII/TPR": {
+                "Tank": 11,
+                "Panser": 17,
+                "Artileri": 19,
+                "Helikopter": 3,
+                "Meriam": 14
+            },
+            "KODAM XIII/MDK": {
+                "Tank": 9,
+                "Panser": 16,
+                "Artileri": 20,
+                "Helikopter": 2,
+                "Meriam": 13
+            },
+            "KODAM XIV/HSN": {
+                "Tank": 13,
+                "Panser": 19,
+                "Artileri": 23,
+                "Helikopter": 4,
+                "Meriam": 16
+            },
+            "KODAM XVI/PTM": {
+                "Tank": 8,
+                "Panser": 15,
+                "Artileri": 17,
+                "Helikopter": 2,
+                "Meriam": 11
+            },
+            "KODAM XVII/CEN": {
+                "Tank": 7,
+                "Panser": 12,
+                "Artileri": 15,
+                "Helikopter": 1,
+                "Meriam": 10
+            },
+            "KODAM XVIII/KSR": {
+                "Tank": 6,
+                "Panser": 11,
+                "Artileri": 14,
+                "Helikopter": 1,
+                "Meriam": 9
+            }
+        };
+    
+        // Detail KODAM
+        var kodamDetails = {
+            "KODAM JAYA": "KODAM IBU KOTA JAKARTA RAYA",
+            "KODAM I/BB": "KODAM BUKIT BARISAN",
+            "KODAM II/SWJ": "KODAM SRIWIJAYA",
+            "KODAM III/SLW": "KODAM SILIWANGI",
+            "KODAM IV/DIP": "KODAM DIPONEGORO",
+            "KODAM V/BRW": "KODAM BRAWIJAYA",
+            "KODAM VI/MLW": "KODAM MULAWARMAN",
+            "KODAM IX/UDY": "KODAM UDAYANA",
+            "KODAM XII/TPR": "KODAM TANJUNGPURA",
+            "KODAM XIII/MDK": "KODAM MERDEKA",
+            "KODAM XIV/HSN": "KODAM HASANUDDIN",
+            "KODAM XVI/PTM": "KODAM PATTIMURA",
+            "KODAM XVII/CEN": "KODAM CENDERAWASIH",
+            "KODAM XVIII/KSR": "KODAM KASUARI"
+        };
+    
+        // Track current markers to clear them when switching between forces
+        let currentMarkers = [];
+    
+        // Function to clear all markers from map
+        function clearMarkers() {
+            currentMarkers.forEach(marker => map.removeLayer(marker));
+            currentMarkers = [];
+        }
+        
+        // Show KODAM alutsista data in info panel
+        function showKodamData(kodamNama) {
+            const data = kodamAlutsista[kodamNama];
+            if (data) {
+                let content = `
+                    <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <h3 style="color: #d10000; margin-bottom: 15px;">${kodamNama}</h3>
+                        <p>${kodamDetails[kodamNama] || ""}</p>
+                        <table style="width:100%; border-collapse: collapse; margin-bottom: 10px;">
+                            <tr style="background: #d10000; color: white;">
+                                <th style="padding: 8px; text-align: left;">Alutsista</th>
+                                <th style="padding: 8px; text-align: center;">Jumlah</th>
+                            </tr>`;
+                
+                for (let [type, count] of Object.entries(data)) {
+                    content += `
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;">${type}</td>
+                            <td style="padding: 8px; text-align: center;">${count}</td>
+                        </tr>`;
+                }
+                
+                content += `</table></div>`;
+                document.getElementById('info').innerHTML = content;
+            }
+        }
+        function showKostradData(namaKostrad) {
+            const kostrad = kostradData.find(item => item.nama === namaKostrad);
+            if (kostrad && kostrad.alutsista) {
+                let content = `
+                    <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <h3 style="color: #d10000; margin-bottom: 15px;">${namaKostrad}</h3>
+                        <p>${kostrad.detail}</p>
+                        <table style="width:100%; border-collapse: collapse; margin-bottom: 10px;">
+                            <tr style="background: #d10000; color: white;">
+                                <th style="padding: 8px; text-align: left;">Alutsista</th>
+                                <th style="padding: 8px; text-align: center;">Jumlah</th>
+                            </tr>`;
+                
+                for (let [type, count] of Object.entries(kostrad.alutsista)) {
+                    content += `
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;">${type}</td>
+                            <td style="padding: 8px; text-align: center;">${count}</td>
+                        </tr>`;
+                }
+                
+                content += `</table></div>`;
+                document.getElementById('info').innerHTML = content;
+            }
+        }
+        // Show KOARMADA alutsista data in info panel
+        function showKoarmadaData(namaKoarmada) {
+            const koarmada = koarmadaData.find(item => item.nama === namaKoarmada);
+            if (koarmada && koarmada.alutsista) {
+                let content = `
+                    <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <h3 style="color: #00437c; margin-bottom: 15px;">${namaKoarmada}</h3>
+                        <p>${koarmada.detail}</p>
+                        <table style="width:100%; border-collapse: collapse; margin-bottom: 10px;">
+                            <tr style="background: #00437c; color: white;">
+                                <th style="padding: 8px; text-align: left;">Alutsista</th>
+                                <th style="padding: 8px; text-align: center;">Jumlah</th>
+                            </tr>`;
+                
+                for (let [type, count] of Object.entries(koarmada.alutsista)) {
+                    content += `
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;">${type}</td>
+                            <td style="padding: 8px; text-align: center;">${count}</td>
+                        </tr>`;
+                }
+                
+                content += `</table></div>`;
+                document.getElementById('info').innerHTML = content;
+            }
+        }
+        
+        // Show KOOPSAU alutsista data in info panel
+        function showKoopsudData(namaKoopsud) {  // Changed from showKoopsauData
+            const koopsud = koopsudData.find(item => item.nama === namaKoopsud);  // Changed variables
+            if (koopsud && koopsud.alutsista) {
+                let content = `
+                    <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <h3 style="color: #0066cc; margin-bottom: 15px;">${namaKoopsud}</h3>
+                        <p>${koopsud.detail}</p>
+                        <table style="width:100%; border-collapse: collapse; margin-bottom: 10px;">
+                            <tr style="background: #0066cc; color: white;">
+                                <th style="padding: 8px; text-align: left;">Alutsista</th>
+                                <th style="padding: 8px; text-align: center;">Jumlah</th>
+                            </tr>`;
+                
+                for (let [type, count] of Object.entries(koopsud.alutsista)) {
+                    content += `
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;">${type}</td>
+                            <td style="padding: 8px; text-align: center;">${count}</td>
+                        </tr>`;
+                }
+                
+                content += `</table></div>`;
+                document.getElementById('info').innerHTML = content;
+            }
+        }
+    
+        // Show markers for KODAM (TNI AD)
+        function showKodamMarkers(data) {
+            data.forEach(item => {
+                let markerIcon;
+                if (item.nama === "KODAM I/BB") {
+                    markerIcon = kodam1Icon;
+                } else if (item.nama === "KODAM IX/UDY") {
+                    markerIcon = udayanaIcon;
+                } else if (item.nama === "KODAM JAYA") {
+                    markerIcon = jayaIcon;
+                } else if (item.nama === "KODAM III/SLW") {
+                    markerIcon = siliwangiIcon;
+                } else if (item.nama === "KODAM XVII/CEN") {
+                    markerIcon = cendrawasihIcon;
+                } else if (item.nama === "KODAM VI/MLW") {
+                    markerIcon = mulawarmanIcon;
+                } else if (item.nama === "KODAM IV/DIP") {
+                    markerIcon = diponegoroIcon;
+                } else if (item.nama === "KODAM XVI/PTM") {
+                    markerIcon = pattimuraIcon;
+                } else if (item.nama === "KODAM XIV/HSN") {
+                    markerIcon = hasanudinIcon;
+                } else if (item.nama === "KODAM XII/TPR") {
+                    markerIcon = tanjungpuraIcon;
+                } else if (item.nama === "KODAM XIII/MDK") {
+                    markerIcon = merdekaIcon;
+                } else if (item.nama === "KODAM XVIII/KSR") {
+                    markerIcon = kasuariIcon;
+                } else if (item.nama === "KODAM V/BRW") {
+                    markerIcon = brawijayaIcon;
+                } else if (item.nama === "KODAM II/SWJ") {
+                    markerIcon = sriwijayaIcon;
+                } else {
+                    markerIcon = adIcon;
+                }
+                
+                const marker = L.marker([item.lat, item.lon], {icon: markerIcon})
+                    .bindPopup(`
+                        <div class="popup-content">
+                            <h4>${item.nama}</h4>
+                            <p>${kodamDetails[item.nama] || ""}</p>
+                            <button onclick="showKodamData('${item.nama}')" class="popup-btn">
+                                Lihat Data Alutsista
+                            </button>
+                        </div>
+                    `);
+                marker.addTo(map);
+                currentMarkers.push(marker);
+            });
+        }
+        function showKostradMarkers(data) {
+            data.forEach(item => {
+                let markerIcon;
+                if (item.nama === "KOSTRAD DIVIF 1") {
+                    markerIcon = divif1Icon;
+                } else if (item.nama === "KOSTRAD DIVIF 2") {
+                    markerIcon = divif2Icon;
+                } else if (item.nama === "KOSTRAD DIVIF 3") {
+                    markerIcon = divif3Icon;
+                }
+
+                const marker = L.marker([item.lat, item.lon], {icon: markerIcon})
+                    .bindPopup(`
+                        <div class="popup-content">
+                            <h4>${item.nama}</h4>
+                            <p>${item.detail}</p>
+                            <button onclick="showKostradData('${item.nama}')" class="popup-btn">
+                                Lihat Data Alutsista
+                            </button>
+                        </div>
+                    `);
+                marker.addTo(map);
+                currentMarkers.push(marker);
+            });
+        }
+
+        // Show markers for KOARMADA (TNI AL)
+        function showNavyMarkers(data) {
+            data.forEach(item => {
+                let markerIcon;
+                if (item.nama === "KOARMADA I") {
+                    markerIcon = koarmada1Icon;
+                } else if (item.nama === "KOARMADA II") {
+                    markerIcon = koarmada2Icon;
+                } else if (item.nama === "KOARMADA III") {
+                    markerIcon = koarmada3Icon;
+                }
+
+                const marker = L.marker([item.lat, item.lon], {icon: markerIcon})
+                    .bindPopup(`
+                        <div class="popup-content">
+                            <h4>${item.nama}</h4>
+                            <p>${item.detail}</p>
+                            <button onclick="showKoarmadaData('${item.nama}')" class="popup-btn">
+                                Lihat Data Alutsista
+                            </button>
+                        </div>
+                    `);
+                marker.addTo(map);
+                currentMarkers.push(marker);
+            });
+        }
+    
+        // Show markers for KOOPSAU (TNI AU)
+        function showAirForceMarkers(data) {
+            data.forEach(item => {
+                let markerIcon;
+                if (item.nama === "KOOPSUD I") {
+                    markerIcon = koopsud1Icon;
+                } else if (item.nama === "KOOPSUD II") {
+                    markerIcon = koopsud2Icon;
+                } else if (item.nama === "KOOPSUD III") {
+                    markerIcon = koopsud3Icon;
+                }
+                
+                const marker = L.marker([item.lat, item.lon], {icon: markerIcon})
+                    .bindPopup(`
+                        <div class="popup-content">
+                            <h4>${item.nama}</h4>
+                            <p>${item.detail}</p>
+                            <button onclick="showKoopsudData('${item.nama}')" class="popup-btn">
+                                Lihat Data Alutsista
+                            </button>
+                        </div>
+                    `);
+                marker.addTo(map);
+                currentMarkers.push(marker);
+            });
+        }
+    
+        // Switch between different military forces
+        function showForceData(force) {
+            clearMarkers();
+            document.getElementById('info').innerHTML = ''; // Clear info panel
+            
+            
+            switch(force) {
+                case 'AD':
+                    showKodamMarkers(kodamData);
+                    break;
+                case 'AL':
+                    showNavyMarkers(koarmadaData);
+                    break;
+                case 'AU':
+                    showAirForceMarkers(koopsudData);
+                    break;
+            }
+            
+            // Update active button
+            document.querySelectorAll('.btn-military').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.dataset.force === force) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        function showADUnit(unitType) {
+            clearMarkers();
+            document.getElementById('info').innerHTML = '';
+            
+            switch(unitType) {
+                case 'KODAM':
+                    showKodamMarkers(kodamData);
+                    break;
+                case 'KOSTRAD':
+                    showKostradMarkers(kostradData);
+                    break;
+                case 'KOREM':
+                    showKoremMarkers(koremData);
+                    break;
+                case 'KODIM':
+                    showKodimMarkers(kodimData);
+                    break;
+                case 'KORAMIL':
+                    showKoramilMarkers(koramilData);
+                    break;
+            }
+        }
+        
+        
+        // Add CSS style for the labels
+        var style = document.createElement('style');
+        style.innerHTML = `
+            .kodam-label {
+                background: transparent;
+                border: none;
+                color: black;
+                font-weight: bold;
+                text-shadow: 1px 1px white;
+            }
+            .popup-content {
+                padding: 5px;
+            }
+            .popup-btn {
+                margin-top: 8px;
+                padding: 5px 10px;
+                background: #d10000;
+                color: white;
+                border: none;
+                border-radius: 3px;
+                cursor: pointer;
+            }
+            .military-footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: rgba(255, 255, 255, 0.9);
+                padding: 10px 0;
+                z-index: 1000;
+                border-top: 2px solid #ccc;
+            }
+            .btn-military {
+                display: block;
+                width: 100%;
+                padding: 10px;
+                border: none;
+                background: #f1f1f1;
+                color: #333;
+                font-weight: bold;
+                text-transform: uppercase;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+            .btn-military.active {
+                background: #d10000;
+                color: white;
+            }
+            .btn-military[data-force="AL"].active {
+                background: #00437c;
+            }
+            .btn-military[data-force="AU"].active {
+                background: #0066cc;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Initialize with KODAM markers (TNI AD)
+        showForceData('AD');
+    
+        // Add event listeners to buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.btn-military').forEach(button => {
+                button.addEventListener('click', function() {
+                    const force = this.dataset.force;
+                    showForceData(force);
+                });
+            });
+            document.querySelectorAll('.btn-military-sub').forEach(button => {
+                button.addEventListener('click', function() {
+                    const type = this.dataset.type;
+                    showADUnit(type);
+                });
+            });
+        });
+        const koremData = [
+            { 
+                nama: "KOREM 031/WB", 
+                lat: 0.5070, 
+                lon: 101.4478,
+                detail: "Korem 031 Wirabima (Pekanbaru)",
+                parent: "KODAM I/BB"
+            },
+            // Add more KOREM data here
+        ];
+
+        const kodimData = [
+            {
+                nama: "KODIM 0501/JP", 
+                lat: -6.1751, 
+                lon: 106.8650,
+                detail: "Kodim 0501 Jakarta Pusat",
+                parent: "KODAM JAYA"
+            },
+            // Add more KODIM data here
+        ];
+
+        const koramilData = [
+            {
+                nama: "KORAMIL 01/PS", 
+                lat: -6.1856, 
+                lon: 106.8426,
+                detail: "Koramil 01 Pasar Senen",
+                parent: "KODIM 0501/JP"
+            },
+            // Add more KORAMIL data here
+        ];
+    </script>
+
+<footer class="military-footer">
+    <div class="container">
+        <div class="row justify-content-center main-buttons">
+            <div class="col-md-4">
+                <button class="btn-military active" data-force="AD">TNI AD</button>
+            </div>
+            <div class="col-md-4">
+                <button class="btn-military" data-force="AL">TNI AL</button>
+            </div>
+            <div class="col-md-4">
+                <button class="btn-military" data-force="AU">TNI AU</button>
+            </div>
+        </div>
+        <div class="row justify-content-center sub-buttons" id="adSubButtons" style="display: none; margin-top: 10px;">
+            <div class="col-md-3">
+                <button class="btn-military-sub active" data-type="KODAM">KODAM</button>
+            </div>
+            <div class="col-md-2">
+                <button class="btn-military-sub" data-type="KOSTRAD">KOSTRAD</button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn-military-sub" data-type="KOREM">KOREM</button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn-military-sub" data-type="KODIM">KODIM</button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn-military-sub" data-type="KORAMIL">KORAMIL</button>
+            </div>
+        </div>
+    </div>
+</footer>
+</body>
+
+</html>

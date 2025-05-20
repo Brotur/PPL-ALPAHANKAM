@@ -1,0 +1,9 @@
+Version: 1.0.1 -----  12 October 2022
+
+Updated : Bootstrap v4 to Bootstrap v5.2.1
+
+
+Version: 1.0.1 -----  28 Jul 2020
+
+1. Added : Search box on Table List View
+2. Added : Scrolling on List
